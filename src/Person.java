@@ -5,13 +5,6 @@ public class Person {
     private String discordID; //  Discord ID of the person
     private String year; // Grade/year level of the person. Freshman: 1, Sophomore: 2, etc.
 
-    public Person() {
-        this.name = null;
-        this.major = null;
-        this.email = null;
-        this.discordID = null;
-        this.year = null;
-    }
     public Person(String name, String major, String email, String discordID, String year) {
         this.name = name;
         this.major = major;
@@ -25,6 +18,13 @@ public class Person {
         this.email = email;
         this.discordID = discordID;
         this.year = null;
+    }
+
+    public Person(String name) {
+        this.name = name;
+        this.major = "";
+        this.email = "";
+        this.discordID = "";
     }
 
     public String getName() {

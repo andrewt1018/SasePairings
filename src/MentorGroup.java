@@ -1,10 +1,28 @@
 import java.util.ArrayList;
 
 public class MentorGroup {
-    ArrayList<Person> mentors;
+    private ArrayList<Person> mentors;
+    ArrayList<Mentee> mentees;
     boolean isProfessional;
     public MentorGroup(ArrayList<Person> mentors) {
         this.mentors = mentors;
+        this.mentees = new ArrayList<>();
+    }
+
+    public ArrayList<Person> getMentors() {
+        return mentors;
+    }
+
+    public void setMentors(ArrayList<Person> mentors) {
+        this.mentors = mentors;
+    }
+
+    public ArrayList<Mentee> getMentees() {
+        return mentees;
+    }
+
+    public void setMentees(ArrayList<Mentee> mentees) {
+        this.mentees = mentees;
     }
 
     @Override
@@ -15,4 +33,13 @@ public class MentorGroup {
         }
         return ret;
     }
+
+    public boolean isProfessional() {
+        return isProfessional;
+    }
+
+    public void setProfessional(boolean professional) {
+        isProfessional = professional;
+    }
 }
+
