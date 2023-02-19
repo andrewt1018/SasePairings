@@ -6,9 +6,16 @@ import java.util.stream.Collectors;
 
 public class Main {
     // File name containing all the applicants
-    private static final String fileName = "applicants.txt";
+    private static final String IN_FILE = "applicants.txt";
+
+    // File name containing the desired file to output results
+    private static final String OUT_FILE = "results.csv";
+
+    // File name containing all of the mentors' data
+    private static final String MENTOR_FILE = "mentors.txt";
+
     // ArrayList containing all of the names of every cabinet member
-    private static final ArrayList<String> cabinet = new ArrayList<>(
+    private static final ArrayList<String> CABINET = new ArrayList<>(
             List.of("Andrew Tan", "Katrina Leon", "Elisa Chen",
                     "David Fu", "Aryamaan Dhomne", "Leo Ye", "Tyler Kim",
                     "Mei-Ching Huang", "Tiana Lin"));
@@ -55,10 +62,10 @@ public class Main {
 
     public static void main(String[] args) {
         // Create mentees
-        readMentees(fileName, "out.txt");
+        readMentees(IN_FILE);
 
         // Create the mentors
-        readMentors("mentors.txt");
+        readMentors(MENTOR_FILE);
 
         // Create the mentor groups
         createMentorGroups();
@@ -66,14 +73,7 @@ public class Main {
 
         System.out.printf("Number of mentees: %d\n", numOfMentees);
         // Main algorithm for creating preferences
-        preferences = new int[numOfGroups][numOfMentees];
-        generatePreferences();
-//        for (int i = 0; i < numOfGroups; i++) {
-//            for (int j = 0; j<numOfMentees; j++) {
-//                System.out.print(preferences[i][j] + " ");
-//                if (j == numOfMentees - 1) System.out.println();
-//            }
-//        }
+        preferences = generatePreferences();
 
         // Pairing up mentees with mentor groups.
         // Run for 1000 times. Find the best pairing results.
@@ -89,26 +89,54 @@ public class Main {
             }
         }
 
-        // Print out the pairing results.
+        // Updating the mentees ArrayList to include the updated group assignments
+        int counter = 0;
+        for (int i = 0; i < numOfGroups; i++) {
+            for (Mentee m :  mentorGroups.get(i).mentees) {
+                mentees.set(counter, m);
+                mentees.get(counter).setGroupNum(i + 1);
+                counter++;
+            }
+        }
+
+        // Print out the pairing results
         pairingResults();
+
+        // Outputting results to file if and only if total score is higher than 106
+        if (totalPoints > 106) outputPairings(OUT_FILE);
     }
 
+    /**
+     * This function outputs the best pairings into the specified output file as indicated in outFile
+     * @param outFile
+     */
+    public static void outputPairings(String outFile) {
+        File f = new File(outFile);
+        try {
+            f.createNewFile();
+            FileWriter fw = new FileWriter(f, true);
+            for (int i = 0; i < numOfGroups; i++) {
+                fw.append(String.format("Group %d,", i + 1));
+                for (Mentee m : bestGroups.get(i).mentees) {
+                    fw.append(String.format("%s", m.getName()));
+                    if (bestGroups.get(i).mentees.indexOf(m) == bestGroups.get(i).mentees.size() - 1) {
+                        fw.append("\n");
+                    } else {
+                        fw.append(",");
+                    }
+                }
+            }
+            fw.append(String.format("Total score: %d\n", totalPoints));
+            fw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * This function outputs all of the pairing results and the stats in the command line
+     */
     public static void pairingResults() {
-//        for (int i = 0; i < numOfMentees; i++) {
-//            Mentee current = mentees.get(i);
-//            System.out.print(current.isCabinet ? String.format("%s is a cabinet member. " +
-//                                                               "Their first choice is group %d. " +
-//                                                               "They were placed in group %d.\n",
-//                                                               current.getName(),
-//                                                               current.preferredGroup1,
-//                                                               current.getGroupNum()) :
-//                                                 String.format("%s is not a cabinet member. " +
-//                                                               "Their first choice is group %d. " +
-//                                                               "They were placed in group %d.\n",
-//                                                               current.getName(),
-//                                                               current.preferredGroup1,
-//                                                               current.getGroupNum()));
-//        }
         for (int i = 0; i < numOfGroups; i++) {
             System.out.printf("Group %d has %d members: ", i + 1, bestGroups.get(i).mentees.size());
             for (int j = 0; j < bestGroups.get(i).mentees.size(); j++) {
@@ -121,10 +149,38 @@ public class Main {
         }
         System.out.println("Total points of pairing: " + totalPoints);
 
+        int firstCount = 0;
+        int secondCount = 0;
+        int thirdCount = 0;
+        int noneCount = 0;
         // Print out the members that did not get their preferences.
-
+        for (Mentee m : mentees) {
+            if (m.getGroupNum() == m.getPreferredGroup1()) {
+//                System.out.printf("%s got their most desired group.\n", m.getName());
+                firstCount++;
+            } else if (m.getGroupNum() == m.getPreferredGroup2()) {
+//                System.out.printf("%s got their second most desired group.\n", m.getName());
+                secondCount++;
+            } else if (m.getGroupNum() == m.getPreferredGroup3()) {
+//                System.out.printf("%s got their third most desired group.\n", m.getName());
+                thirdCount++;
+            } else {
+                System.out.printf("%s did not get any of their desired groups.\n", m.getName());
+                noneCount++;
+            }
+        }
+        System.out.printf("%d mentees got their most desired group.\n", firstCount);
+        System.out.printf("%d mentees got their second most desired group.\n", secondCount);
+        System.out.printf("%d mentees got their third most desired group.\n", thirdCount);
+        System.out.printf("%d mentees did not get their desired group.\n", noneCount);
     }
 
+    /**
+     * This function is the main method to pair up mentor groups with mentees. Based on the preferences
+     * assigned by the generatePreferences() function, each mentee is assigned into (hopefully) a desired
+     * mentor group based on their preferences. General members are sorted first, and cabinet members
+     * are assigned afterwards.
+     */
     public static int pairUp() {
         randomizeCol(preferences);
 
@@ -199,7 +255,13 @@ public class Main {
         return points;
     }
 
-    public static void generatePreferences() {
+    /**
+     * This function generates the preferences each mentee has for each mentor group. The preferences
+     * are stored in a 2D int array called preferences with the rows being the mentor groups
+     * (0 indexed in the function but 1 indexed irl), and the columns being each mentee
+     */
+    public static int[][] generatePreferences() {
+        int[][] ret = new int[numOfGroups][numOfMentees];
         for (int row = 0; row < numOfGroups; row++) {
             for (int col = 0; col < numOfMentees; col++) {
                 int points = 0;
@@ -221,10 +283,15 @@ public class Main {
                         .size() != 0) {
                     points += SAME_MAJOR;
                 }
-                preferences[row][col] = points;
+                ret[row][col] = points;
             }
         }
+        return ret;
     }
+
+    /**
+     * This function creates all of the mentor groups based on the user's choice.
+     */
     public static void createMentorGroups() {
         ArrayList<Person> group1, group2, group3, group4, group5, group6, group7;
         group1 = mentors.stream().filter(n -> (n.getName().equals("Andre Tan") ||
@@ -288,6 +355,10 @@ public class Main {
         }
     }
 
+    /**
+     * This function reads in all of the mentors from the specified mentors file stored in mentorFile.
+     * @param in_file
+     */
     public static void readMentors(String in_file) {
         // Retrieving all of the mentors' data from a file
         // Expected file layout: name,major,email,discordID
@@ -321,7 +392,12 @@ public class Main {
         }
     }
 
-    public static void readMentees(String in_file, String out_file) {
+    /**
+     * This function takes in an input file containing all of the mentees' data. It then stores all of
+     * this data in the mentees ArrayList.
+     * @param in_file
+     */
+    public static void readMentees(String in_file) {
         // Retrieving all of the mentees' data from a file
         // Expected file layout: name,major,email,discordID,year,preferred_mentor1,preferred_mentor2,preferred_mentor3,isProfessional
         File f = new File(in_file);
@@ -337,12 +413,12 @@ public class Main {
                     line = bfr.readLine();
                     continue;
                 }
-                String name = lineArr[0];
+                String name = lineArr[0].replace("\uFEFF","");
                 int mentor1 = Integer.parseInt(lineArr[1]);
                 int mentor2 = Integer.parseInt(lineArr[2]);
                 int mentor3 = Integer.parseInt(lineArr[3]);
                 Mentee current = new Mentee(name, mentor1, mentor2, mentor3, idNumber);
-                current.setCabinet(cabinet.stream().anyMatch(name::contains));
+                current.setCabinet(CABINET.stream().anyMatch(name::contains));
                 mentees.add(current);
                 idNumber++;
                 line = bfr.readLine();
@@ -354,36 +430,14 @@ public class Main {
         } catch (IOException e) {
             System.out.printf("Error reading %s\n", in_file);
         }
-
-        /*
-        File out = new File(out_file);
-        try {
-            if (out.exists()) {
-                FileWriter fw = new FileWriter(out_file, true);
-                for (Mentee p : mentees) {
-                    String out_file_text = readFileAsString(out_file);
-                    if (out_file_text.contains(p.getEmail()) && out_file_text.contains(p.getDiscordID())) {
-                        continue;
-                    }
-                    fw.append(p.toString());
-                }
-                fw.close();
-                System.out.printf("Printed to file %s successfully!\n", out_file);
-            } else {
-                out.createNewFile();
-                FileWriter fw = new FileWriter(out_file, true);
-                for (Mentee p : mentees) {
-                    fw.append(p.toString());
-                }
-                fw.close();
-                System.out.printf("Printed to file %s successfully!\n", out_file);
-            }
-        } catch (IOException e) {
-            System.out.println("Output file failed");
-        }
-        */
     }
 
+    /**
+     * Helper method that reads all of the contents of a file as a single long string
+     * @param fileName
+     * @return
+     * @throws IOException
+     */
     public static String readFileAsString(String fileName) throws IOException {
         File f = new File(fileName);
         FileReader fr = new FileReader(f);

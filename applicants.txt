@@ -22,7 +22,7 @@ Ryan Xie,5,7,2
 Mike Xiao,4,2,5
 Tanmay Panchpor,4,6,7
 Andrew Tan,1,5,7
-Raqib Chowdhury,-1,1,2
+Raqib Chowdhury,-1,-1,-1
 Vijay Tummalapenta,1,7,2
 Mark Tseng,5,5,1
 Queenie Chen,1,4,3
