@@ -118,7 +118,11 @@ public class Main {
             for (int i = 0; i < numOfGroups; i++) {
                 fw.append(String.format("Group %d,", i + 1));
                 for (Mentee m : bestGroups.get(i).mentees) {
-                    fw.append(String.format("%s", m.getName()));
+                    int pref = 0;
+                    if (m.preferredGroup1 == i + 1) pref = 1;
+                    else if (m.preferredGroup2 == i + 1) pref = 2;
+                    else if (m.preferredGroup3 == i + 1) pref = 3;
+                    fw.append(String.format("%s%d", m.getName(), pref));
                     if (bestGroups.get(i).mentees.indexOf(m) == bestGroups.get(i).mentees.size() - 1) {
                         fw.append("\n");
                     } else {
@@ -208,11 +212,14 @@ public class Main {
                 } else if (mentorGroups.get(mentees.get(i).preferredGroup3 - 1).mentees.size() < maxPerGroup + 2) {
                     ideal = mentees.get(i).preferredGroup3 - 1;
                 } else {
+                    ArrayList<Integer> randGroupNum = new ArrayList<>();
                     for (int k = 0; k < numOfGroups; k++) {
                         if (mentorGroups.get(k).mentees.size() <= maxPerGroup) {
-                            ideal = k;
+                            randGroupNum.add(k);
                         }
                     }
+                    Random rand = new Random();
+                    ideal = randGroupNum.get(rand.nextInt(randGroupNum.size()));
                 }
             }
             points += preferences[ideal][i];
@@ -241,11 +248,14 @@ public class Main {
                 } else if (mentorGroups.get(mentees.get(i).preferredGroup3 - 1).mentees.size() < maxPerGroup + 2) {
                     ideal = mentees.get(i).preferredGroup3 - 1;
                 } else {
+                    ArrayList<Integer> randGroupNum = new ArrayList<>();
                     for (int k = 0; k < numOfGroups; k++) {
                         if (mentorGroups.get(k).mentees.size() <= maxPerGroup) {
-                            ideal = k;
+                            randGroupNum.add(k);
                         }
                     }
+                    Random rand = new Random();
+                    ideal = randGroupNum.get(rand.nextInt(randGroupNum.size()));
                 }
             }
             points += preferences[ideal][i];

@@ -27,3 +27,10 @@ Vijay Tummalapenta,1,7,2
 Mark Tseng,5,5,1
 Queenie Chen,1,4,3
 Justin Lin,1,4,3
+David Fu,5,1,4
+Ruth Sugiarto,2,6,7
+Mia May,5,7,2
+Erika Wong,2,7,4
+Erin Plocinski,4,6,7
+Lauren Jenkins,4,7,3
+Talyor Vincente,2,7,1

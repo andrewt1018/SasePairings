@@ -3,19 +3,7 @@ import java.util.Random;
 
 public class Test {
     public static void main(String[] args) {
-        int[][] arr = {{1, 2, 3}, {2, 3, 4}};
-        for (int[] row : arr) {
-            for (int element : row) {
-                System.out.print(element + " ");
-            }
-        }
-        System.out.println();
-        randomizeCol(arr);
-        for (int[] row : arr) {
-            for (int element : row) {
-                System.out.print(element + " ");
-            }
-        }
+        System.out.println((413*413*413*413*413)%3);
     }
 
     public static void randomizeCol(int[][] array) {
