@@ -16,6 +16,6 @@ Winston Wang,CS,wang4362@purdue.edu,Biodegradable#5236
 Caroline Wang,UX,wang4318@purdue.edu,jangeau#3600
 Abby Zahm,ME, ,Zahmbie#9913
 Janathan Balakrishnan,ME,jbalakr@purdue.edu,kerchoo#0178
-Yong Sung Kim,Me,kim3081@purdue.edu,yongs#9384
+Yong Sung Kim,ME,kim3081@purdue.edu,yongs#9384
 Jessica Wong,ECE,wongjt@purdue.edu,wong_right#8067
 Michael Bi,ME, ,Ape Monkey#8739

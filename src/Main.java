@@ -77,7 +77,7 @@ public class Main {
 
         // Pairing up mentees with mentor groups.
         // Run for 1000 times. Find the best pairing results.
-        int iterations = 1000;
+        int iterations = 10000;
         for (int count = 0; count < iterations; count++) {
             for (int j = 0; j < numOfGroups; j++) {
                 mentorGroups.get(j).mentees.clear();
@@ -186,6 +186,7 @@ public class Main {
      * are assigned afterwards.
      */
     public static int pairUp() {
+        // Randomize the columns in preferences as well as the corresponding mentees in mentees
         randomizeCol(preferences);
 
         int maxPerGroup = numOfMentees / numOfGroups;
@@ -193,24 +194,51 @@ public class Main {
 
         // Pair up each non-cabinet member
         for (int i = 0; i < numOfMentees; i++) {
-            if (mentees.get(i).isCabinet) continue;
+            Mentee current = mentees.get(i);
+            if (current.isCabinet) continue;
 
             int ideal = -1;
             int maxPoints = -1;
-            for (int j = 0; j < numOfGroups; j++) {
-                if (preferences[j][i] >= maxPoints && mentorGroups.get(j).mentees.size() < maxPerGroup) {
-                    ideal = j;
-                    maxPoints = preferences[j][i];
+
+            // Fill up group 3 and group 6 first
+            if ((current.preferredGroup1 == 3 || current.preferredGroup2 == 3 || current.preferredGroup3 == 3) &&
+                    (mentorGroups.get(2).mentees.size() < maxPerGroup + 1)){
+                if (preferences[2][i] >= maxPoints) {
+                    ideal = 2;
+                    maxPoints = preferences[2][i];
+                }
+            }
+            if ((current.preferredGroup1 == 6 || current.preferredGroup2 == 6 || current.preferredGroup3 == 6) &&
+                    ((mentorGroups.get(5).mentees.size() < maxPerGroup + 1))){
+                if (preferences[5][i] >= maxPoints) {
+                    ideal = 5;
+                    maxPoints = preferences[5][i];
+                }
+            }
+            if (ideal == -1) {
+                for (int j = 0; j < numOfGroups; j++) {
+                    if (preferences[j][i] >= maxPoints && mentorGroups.get(j).mentees.size() < maxPerGroup) {
+                        ideal = j;
+                        maxPoints = preferences[j][i];
+                    }
                 }
             }
             if (ideal == -1) {
                 // If no available group, check if their preferred groups can be somehow stretched
-                if (mentorGroups.get(mentees.get(i).preferredGroup1 - 1).mentees.size() < maxPerGroup + 2) {
-                    ideal = mentees.get(i).preferredGroup1 - 1;
-                } else if (mentorGroups.get(mentees.get(i).preferredGroup2 - 1).mentees.size() < maxPerGroup + 2) {
-                    ideal = mentees.get(i).preferredGroup2 - 1;
-                } else if (mentorGroups.get(mentees.get(i).preferredGroup3 - 1).mentees.size() < maxPerGroup + 2) {
-                    ideal = mentees.get(i).preferredGroup3 - 1;
+                if (mentorGroups.get(current.preferredGroup1 - 1).mentees.size() < maxPerGroup + 2) {
+                    ideal = current.preferredGroup1 - 1;
+                } else if (mentorGroups.get(current.preferredGroup2 - 1).mentees.size() < maxPerGroup + 2) {
+                    ideal = current.preferredGroup2 - 1;
+                } else if (mentorGroups.get(current.preferredGroup3 - 1).mentees.size() < maxPerGroup + 2) {
+                    ideal = current.preferredGroup3 - 1;
+                } else if (!current.getMajor().isEmpty()) { // Check using major
+                    for (MentorGroup g : mentorGroups) {
+                        for (Person mentor : g.getMentors()) {
+                            if (current.getMajor().equals(mentor.getMajor()) && g.getMentors().size() < maxPerGroup + 2) {
+                                ideal = mentorGroups.indexOf(g);
+                            }
+                        }
+                    }
                 } else {
                     ArrayList<Integer> randGroupNum = new ArrayList<>();
                     for (int k = 0; k < numOfGroups; k++) {
@@ -223,8 +251,8 @@ public class Main {
                 }
             }
             points += preferences[ideal][i];
-            mentees.get(i).setGroupNum(ideal + 1);
-            mentorGroups.get(ideal).mentees.add(mentees.get(i));
+            current.setGroupNum(ideal + 1);
+            mentorGroups.get(ideal).mentees.add(current);
         }
 
         // Pair up each cabinet member
@@ -247,6 +275,14 @@ public class Main {
                     ideal = mentees.get(i).preferredGroup2 - 1;
                 } else if (mentorGroups.get(mentees.get(i).preferredGroup3 - 1).mentees.size() < maxPerGroup + 2) {
                     ideal = mentees.get(i).preferredGroup3 - 1;
+                } else if (!mentees.get(i).getMajor().isEmpty()) { // Check using major
+                    for (MentorGroup g : mentorGroups) {
+                        for (Person mentor : g.getMentors()) {
+                            if (mentees.get(i).getMajor().equals(mentor.getMajor()) && g.getMentors().size() < maxPerGroup + 2) {
+                                ideal = mentorGroups.indexOf(g);
+                            }
+                        }
+                    }
                 } else {
                     ArrayList<Integer> randGroupNum = new ArrayList<>();
                     for (int k = 0; k < numOfGroups; k++) {
@@ -414,28 +450,32 @@ public class Main {
         try {
             FileReader fr = new FileReader(f);
             BufferedReader bfr = new BufferedReader(fr);
-            int idNumber = 0;
             String line = bfr.readLine();
             while (line != null) {
                 String lineArr[] = line.split(",");
-                if (lineArr.length != 4) {
+                if (lineArr.length != 4 && lineArr.length != 5) {
                     err_mentees.add(line);
                     line = bfr.readLine();
                     continue;
                 }
+                Mentee current;
                 String name = lineArr[0].replace("\uFEFF","");
                 int mentor1 = Integer.parseInt(lineArr[1]);
                 int mentor2 = Integer.parseInt(lineArr[2]);
                 int mentor3 = Integer.parseInt(lineArr[3]);
-                Mentee current = new Mentee(name, mentor1, mentor2, mentor3, idNumber);
+                if (lineArr.length == 5) {
+                    String major = lineArr[4];
+                    current = new Mentee(name, mentor1, mentor2, mentor3, major);
+                } else {
+                    current = new Mentee(name, mentor1, mentor2, mentor3);
+                }
                 current.setCabinet(CABINET.stream().anyMatch(name::contains));
                 mentees.add(current);
-                idNumber++;
                 line = bfr.readLine();
             }
             fr.close();
             bfr.close();
-            numOfMentees = idNumber;
+            numOfMentees = mentees.size();
             System.out.printf("%s read successfully!\n", in_file);
         } catch (IOException e) {
             System.out.printf("Error reading %s\n", in_file);
@@ -476,5 +516,16 @@ public class Main {
                 array[j][r] = temp;
             }
         }
+    }
+
+    public static String arrayToString(int[][] array) {
+        String ret = "";
+        for (int i = 0; i < array.length; i++) {
+            for (int j = 0; j < array[0].length; j++) {
+                ret += "" + array[i][j];
+                ret += (j == array[0].length - 1) ? "\n" : ", ";
+            }
+        }
+        return ret;
     }
 }
