@@ -16,7 +16,7 @@ Augustin Ramlie,5,1,6
 Kenneth Lee,5,1,2
 Sejal Rhodes,5,1,7
 Frank Shi,5,1,7
-Sylvia Chan,7,3,2
+Sylvia Chan,7,3,2,ME
 Catherine Park,3,5,7
 Ryan Xie,5,7,2
 Mike Xiao,4,2,5

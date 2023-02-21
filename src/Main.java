@@ -103,7 +103,7 @@ public class Main {
         pairingResults();
 
         // Outputting results to file if and only if total score is higher than 106
-        if (totalPoints > 106) outputPairings(OUT_FILE);
+        outputPairings(OUT_FILE);
     }
 
     /**
@@ -194,111 +194,88 @@ public class Main {
 
         // Pair up each non-cabinet member
         for (int i = 0; i < numOfMentees; i++) {
-            Mentee current = mentees.get(i);
-            if (current.isCabinet) continue;
-
-            int ideal = -1;
-            int maxPoints = -1;
-
-            // Fill up group 3 and group 6 first
-            if ((current.preferredGroup1 == 3 || current.preferredGroup2 == 3 || current.preferredGroup3 == 3) &&
-                    (mentorGroups.get(2).mentees.size() < maxPerGroup + 1)){
-                if (preferences[2][i] >= maxPoints) {
-                    ideal = 2;
-                    maxPoints = preferences[2][i];
-                }
-            }
-            if ((current.preferredGroup1 == 6 || current.preferredGroup2 == 6 || current.preferredGroup3 == 6) &&
-                    ((mentorGroups.get(5).mentees.size() < maxPerGroup + 1))){
-                if (preferences[5][i] >= maxPoints) {
-                    ideal = 5;
-                    maxPoints = preferences[5][i];
-                }
-            }
-            if (ideal == -1) {
-                for (int j = 0; j < numOfGroups; j++) {
-                    if (preferences[j][i] >= maxPoints && mentorGroups.get(j).mentees.size() < maxPerGroup) {
-                        ideal = j;
-                        maxPoints = preferences[j][i];
-                    }
-                }
-            }
-            if (ideal == -1) {
-                // If no available group, check if their preferred groups can be somehow stretched
-                if (mentorGroups.get(current.preferredGroup1 - 1).mentees.size() < maxPerGroup + 2) {
-                    ideal = current.preferredGroup1 - 1;
-                } else if (mentorGroups.get(current.preferredGroup2 - 1).mentees.size() < maxPerGroup + 2) {
-                    ideal = current.preferredGroup2 - 1;
-                } else if (mentorGroups.get(current.preferredGroup3 - 1).mentees.size() < maxPerGroup + 2) {
-                    ideal = current.preferredGroup3 - 1;
-                } else if (!current.getMajor().isEmpty()) { // Check using major
-                    for (MentorGroup g : mentorGroups) {
-                        for (Person mentor : g.getMentors()) {
-                            if (current.getMajor().equals(mentor.getMajor()) && g.getMentors().size() < maxPerGroup + 2) {
-                                ideal = mentorGroups.indexOf(g);
-                            }
-                        }
-                    }
-                } else {
-                    ArrayList<Integer> randGroupNum = new ArrayList<>();
-                    for (int k = 0; k < numOfGroups; k++) {
-                        if (mentorGroups.get(k).mentees.size() <= maxPerGroup) {
-                            randGroupNum.add(k);
-                        }
-                    }
-                    Random rand = new Random();
-                    ideal = randGroupNum.get(rand.nextInt(randGroupNum.size()));
-                }
-            }
-            points += preferences[ideal][i];
-            current.setGroupNum(ideal + 1);
-            mentorGroups.get(ideal).mentees.add(current);
+            if (mentees.get(i).isCabinet) continue;
+            points += pairMentee(i, maxPerGroup);
         }
 
         // Pair up each cabinet member
         for (int i = 0; i < numOfMentees; i++) {
             if (!mentees.get(i).isCabinet) continue;
-
-            int ideal = -1;
-            int maxPoints = -1;
-            for (int j = 0; j < numOfGroups; j++) {
-                if (preferences[j][i] >= maxPoints && mentorGroups.get(j).mentees.size() < maxPerGroup) {
-                    ideal = j;
-                    maxPoints = preferences[j][i];
-                }
-            }
-            if (ideal == -1) {
-                // If no available group, check if their preferred groups can be somehow stretched
-                if (mentorGroups.get(mentees.get(i).preferredGroup1 - 1).mentees.size() < maxPerGroup + 2) {
-                    ideal = mentees.get(i).preferredGroup1 - 1;
-                } else if (mentorGroups.get(mentees.get(i).preferredGroup2 - 1).mentees.size() < maxPerGroup + 2) {
-                    ideal = mentees.get(i).preferredGroup2 - 1;
-                } else if (mentorGroups.get(mentees.get(i).preferredGroup3 - 1).mentees.size() < maxPerGroup + 2) {
-                    ideal = mentees.get(i).preferredGroup3 - 1;
-                } else if (!mentees.get(i).getMajor().isEmpty()) { // Check using major
-                    for (MentorGroup g : mentorGroups) {
-                        for (Person mentor : g.getMentors()) {
-                            if (mentees.get(i).getMajor().equals(mentor.getMajor()) && g.getMentors().size() < maxPerGroup + 2) {
-                                ideal = mentorGroups.indexOf(g);
-                            }
-                        }
-                    }
-                } else {
-                    ArrayList<Integer> randGroupNum = new ArrayList<>();
-                    for (int k = 0; k < numOfGroups; k++) {
-                        if (mentorGroups.get(k).mentees.size() <= maxPerGroup) {
-                            randGroupNum.add(k);
-                        }
-                    }
-                    Random rand = new Random();
-                    ideal = randGroupNum.get(rand.nextInt(randGroupNum.size()));
-                }
-            }
-            points += preferences[ideal][i];
-            mentees.get(i).setGroupNum(ideal + 1);
-            mentorGroups.get(ideal).mentees.add(mentees.get(i));
+            points += pairMentee(i, maxPerGroup);
         }
         return points;
+    }
+
+    /**
+     * This function is a helper function for the pairUp() function. It takes in an index indicating the index
+     * of the mentee in the mentees ArrayList, as well as an maxPerGroup integer indicating how many mentees
+     * can there be per mentor group. It then appoints the corresponding mentee to the best mentor group.
+     * @param indexOfMentee
+     * @param maxPerGroup
+     * @return Returns the number of points the mentee gets for getting assigned to its group
+     */
+    public static int pairMentee(int indexOfMentee, int maxPerGroup) {
+        Mentee mentee = mentees.get(indexOfMentee);
+
+        int ideal = -1; // index of the ideal mentor group
+        int maxPoints = -1; // number of points it gets for each mentor group
+
+        // Fill up group 3 and group 6 first
+        if ((mentee.preferredGroup1 == 3 || mentee.preferredGroup2 == 3 || mentee.preferredGroup3 == 3) &&
+                (mentorGroups.get(2).mentees.size() < maxPerGroup + 1)){
+            if (preferences[2][indexOfMentee] >= maxPoints) {
+                ideal = 2;
+                maxPoints = preferences[2][indexOfMentee];
+            }
+        }
+        if ((mentee.preferredGroup1 == 6 || mentee.preferredGroup2 == 6 || mentee.preferredGroup3 == 6) &&
+                ((mentorGroups.get(5).mentees.size() < maxPerGroup + 1))){
+            if (preferences[5][indexOfMentee] >= maxPoints) {
+                ideal = 5;
+                maxPoints = preferences[5][indexOfMentee];
+            }
+        }
+
+        if (ideal == -1) {
+            /* If still not assigned to a group, loop through the mentee's
+               preferences and return the next best mentor group */
+            for (int j = 0; j < numOfGroups; j++) {
+                if (preferences[j][indexOfMentee] >= maxPoints && mentorGroups.get(j).mentees.size() < maxPerGroup) {
+                    ideal = j;
+                    maxPoints = preferences[j][indexOfMentee];
+                }
+            }
+        }
+        if (ideal == -1) {
+            // If no available group, check if their preferred groups can be somehow stretched
+            if (mentorGroups.get(mentee.preferredGroup1 - 1).mentees.size() < maxPerGroup + 2) {
+                ideal = mentee.preferredGroup1 - 1;
+            } else if (mentorGroups.get(mentee.preferredGroup2 - 1).mentees.size() < maxPerGroup + 2) {
+                ideal = mentee.preferredGroup2 - 1;
+            } else if (mentorGroups.get(mentee.preferredGroup3 - 1).mentees.size() < maxPerGroup + 2) {
+                ideal = mentee.preferredGroup3 - 1;
+            } else if (!mentee.getMajor().isEmpty()) { // Check using major
+                for (MentorGroup g : mentorGroups) {
+                    for (Person mentor : g.getMentors()) {
+                        if (mentee.getMajor().equals(mentor.getMajor()) && g.getMentors().size() < maxPerGroup + 2) {
+                            ideal = mentorGroups.indexOf(g);
+                        }
+                    }
+                }
+            } else {
+                ArrayList<Integer> randGroupNum = new ArrayList<>();
+                for (int k = 0; k < numOfGroups; k++) {
+                    if (mentorGroups.get(k).mentees.size() <= maxPerGroup) {
+                        randGroupNum.add(k);
+                    }
+                }
+                Random rand = new Random();
+                ideal = randGroupNum.get(rand.nextInt(randGroupNum.size()));
+            }
+        }
+        mentee.setGroupNum(ideal + 1);
+        mentorGroups.get(ideal).mentees.add(mentee);
+        return preferences[ideal][indexOfMentee];
     }
 
     /**
